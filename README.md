@@ -74,12 +74,19 @@ node on its own; you don't add a node selector:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: nginx-gvisor
+  name: podinfo-gvisor
 spec:
   runtimeClassName: gvisor
   containers:
-    - name: nginx
-      image: nginx
+    - name: podinfo
+      image: ghcr.io/stefanprodan/podinfo:latest
+```
+
+There's a ready-to-apply version in [`examples/sandboxed-pod.yaml`](examples/sandboxed-pod.yaml):
+
+```bash
+kubectl apply -f examples/sandboxed-pod.yaml
+kubectl exec podinfo-gvisor -- uname -a   # the 4.4.0 gVisor kernel, not the host's
 ```
 
 ## Configuration
@@ -121,6 +128,7 @@ the `gvisor` runtime class.
 image/                Dockerfile + install-gvisor.sh (the installer image)
 charts/gvisor-vks/     Helm chart (DaemonSet + RuntimeClass)
 namespace.yaml         privileged namespace, applied before the chart
+examples/              sample sandboxed workloads
 ```
 
 ### The installer image

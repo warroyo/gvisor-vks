@@ -1,0 +1,20 @@
+# A pod that runs sandboxed under gVisor. The only line that matters is
+# runtimeClassName: gvisor — the RuntimeClass schedules it onto a gVisor node
+# automatically, so no nodeSelector is needed.
+#
+#   kubectl apply -f examples/sandboxed-pod.yaml
+#   kubectl wait --for=condition=Ready pod/podinfo-gvisor
+#
+# Confirm it's actually sandboxed (gVisor reports its own fake kernel):
+#   kubectl exec podinfo-gvisor -- uname -a   # shows a 4.4.0 gVisor kernel
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podinfo-gvisor
+spec:
+  runtimeClassName: gvisor
+  containers:
+    - name: podinfo
+      image: ghcr.io/stefanprodan/podinfo:latest
+      ports:
+        - containerPort: 9898
