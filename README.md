@@ -98,7 +98,42 @@ ready-to-apply version in [`examples/sandboxed-pod.yaml`](examples/sandboxed-pod
 
 ```bash
 kubectl apply -f examples/sandboxed-pod.yaml
-kubectl exec podinfo-gvisor -- uname -a   # the 4.4.0 gVisor kernel, not the host's
+```
+
+### Confirming the sandbox
+
+gVisor runs the container against its own user-space kernel, so the easiest
+check is to read the kernel log from inside the pod:
+
+```bash
+kubectl exec podinfo-gvisor -- dmesg
+```
+
+You'll see gVisor's boot banner, which a normal `runc` container never prints:
+
+```
+[    0.000000] Starting gVisor...
+[    0.183446] Rewriting the kernel in Rust...
+[    0.245925] Reticulating splines...
+[    0.534288] Creating bureaucratic processes...
+...
+[    2.264846] Ready!
+```
+
+`/proc/version` is the same story — it reports gVisor's faked `4.4.0` kernel
+rather than the node's:
+
+```bash
+kubectl exec podinfo-gvisor -- cat /proc/version   # Linux version 4.4.0 ... gVisor
+```
+
+For a node-side check, the sandbox shows up as a `runsc` process instead of
+`runc`:
+
+```bash
+NODE=$(kubectl get pod podinfo-gvisor -o jsonpath='{.spec.nodeName}')
+# on that node:
+ps aux | grep '[r]unsc'
 ```
 
 ## Configuration
