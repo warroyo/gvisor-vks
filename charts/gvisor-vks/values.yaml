@@ -1,15 +1,9 @@
-# Namespace. The installer is a privileged, host-mounting pod, so its namespace
-# must run at Pod Security Admission level "privileged" (VKS enforces
-# "restricted" by default). Helm cannot create the namespace it installs into,
-# so apply ../../namespace.yaml first, then `helm install -n gvisor-system`.
-# Resources land in the release namespace.
-#
-# Set create=true only if some other tool (e.g. kapp in the addon path) renders
-# the chart and applies the namespace in the same pass.
+# Namespace the resources deploy into. The chart does NOT create it: the
+# installer is a privileged, host-mounting pod and VKS enforces PSA "restricted"
+# by default, so the namespace must be pre-created with the "privileged" label.
+# Apply ../../namespace.yaml first, then `helm install -n gvisor-system`.
 namespace:
-  create: false
   name: ""                      # empty => use the release namespace (helm -n)
-  podSecurityLevel: privileged  # PSA level when create=true
 
 # Installer image (built + pushed by .github/workflows/build-image.yml).
 image:

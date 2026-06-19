@@ -98,9 +98,8 @@ helm install gvisor charts/gvisor-vks -n gvisor-system
 ```
 
 `namespace.yaml` carries the `pod-security.kubernetes.io/enforce: privileged`
-label. Resources land in the release namespace (`-n`). If a tool that applies
-the namespace and chart in one pass manages the install (e.g. kapp in the addon
-path), set `namespace.create=true` to render the namespace from the chart.
+label. Resources land in the release namespace (`-n`); override with
+`--set namespace.name=...`.
 
 Common overrides (`--set` or a values file):
 
