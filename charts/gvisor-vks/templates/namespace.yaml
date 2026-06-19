@@ -1,0 +1,13 @@
+{{- if .Values.namespace.create }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ include "gvisor-vks.namespace" . }}
+  labels:
+    {{- include "gvisor-vks.labels" . | nindent 4 }}
+    # The installer pod is privileged + mounts the host; PSA must allow it.
+    pod-security.kubernetes.io/enforce: {{ .Values.namespace.podSecurityLevel }}
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: {{ .Values.namespace.podSecurityLevel }}
+    pod-security.kubernetes.io/audit: {{ .Values.namespace.podSecurityLevel }}
+{{- end }}

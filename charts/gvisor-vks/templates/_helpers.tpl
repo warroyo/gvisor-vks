@@ -38,6 +38,11 @@ app.kubernetes.io/name: {{ include "gvisor-vks.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
+{{/* Target namespace: explicit override or the release namespace. */}}
+{{- define "gvisor-vks.namespace" -}}
+{{- .Values.namespace.name | default .Release.Namespace -}}
+{{- end -}}
+
 {{/* Image ref: tag falls back to chart appVersion. */}}
 {{- define "gvisor-vks.image" -}}
 {{- $tag := .Values.image.tag | default .Chart.AppVersion -}}

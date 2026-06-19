@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: {{ include "gvisor-vks.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ include "gvisor-vks.namespace" . }}
   labels:
     {{- include "gvisor-vks.labels" . | nindent 4 }}
   {{- with .Values.commonAnnotations }}
