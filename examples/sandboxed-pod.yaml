@@ -17,6 +17,8 @@ spec:
   # VKS enforces by default, so this runs in any namespace (e.g. default).
   securityContext:
     runAsNonRoot: true
+    runAsUser: 65532          # explicit numeric uid; the image's USER is non-numeric ("app")
+    runAsGroup: 65532
     seccompProfile:
       type: RuntimeDefault
   containers:
