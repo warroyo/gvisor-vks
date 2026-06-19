@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gvisor-system
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: gvisor-installer
+  namespace: gvisor-system
+  labels:
+    app: gvisor-installer
+spec:
+  selector:
+    matchLabels:
+      app: gvisor-installer
+  template:
+    metadata:
+      labels:
+        app: gvisor-installer
+    spec:
+      # Share host PID namespace so nsenter can reach the host's PID 1 (systemd).
+      hostPID: true
+      # Tolerate everything: the runtime must be installed on every node,
+      # including control-plane and tainted nodes.
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: installer
+          # Built + pushed by .github/workflows/build-image.yml.
+          image: ghcr.io/warroyo/gvisor-installer:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true        # required for nsenter + writing host paths
+          env:
+            - name: HOST_ROOT
+              value: /host
+            - name: GVISOR_RELEASE
+              value: latest
+          volumeMounts:
+            - name: host-root
+              mountPath: /host
+          # Readiness gates on the sentinel the script writes after a clean install.
+          readinessProbe:
+            exec:
+              command: ["test", "-f", "/host/usr/local/bin/.gvisor-installed"]
+            initialDelaySeconds: 10
+            periodSeconds: 15
+      volumes:
+        - name: host-root
+          hostPath:
+            path: /
+            type: Directory
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
