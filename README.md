@@ -33,8 +33,8 @@ containerd would reject it with "runsc runtime not found".
 
 ## Install
 
-You need an x86_64 node pool (VKS doesn't run arm), `helm`, and the installer
-image reachable from the cluster. By default that's
+You need `helm` and the installer image reachable from the cluster. By default
+that's
 `ghcr.io/warroyo/gvisor-installer` — make the GHCR package public or hand the
 chart an `imagePullSecret`.
 
@@ -182,8 +182,7 @@ examples/              sample sandboxed workloads
 
 `runsc` and `containerd-shim-runsc-v1` are downloaded and checksum-verified when
 the image is built, then baked in. At runtime the DaemonSet only pulls the image
-— it never downloads binaries — which keeps it usable on airgapped clusters. The
-image is x86_64 only.
+— it never downloads binaries — which keeps it usable on airgapped clusters.
 
 If the baked binaries are ever missing, the script falls back to downloading
 them from the gVisor release bucket (`wget` is kept in the image for that). The
