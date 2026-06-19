@@ -21,10 +21,10 @@ spec:
     spec:
       # Share host PID namespace so nsenter can reach the host's PID 1 (systemd).
       hostPID: true
-      # Tolerate everything: the runtime must be installed on every node,
-      # including control-plane and tainted nodes.
-      tolerations:
-        - operator: Exists
+      # Install only on the gvisor node pool. Set label gvisor=enabled on the
+      # VKS node pool spec; nodes inherit it. See RuntimeClass scheduling block.
+      nodeSelector:
+        gvisor: enabled
       containers:
         - name: installer
           # Built + pushed by .github/workflows/build-image.yml.

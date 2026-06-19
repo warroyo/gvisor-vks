@@ -5,3 +5,9 @@ kind: RuntimeClass
 metadata:
   name: gvisor
 handler: runsc        # matches containerd runtimes.runsc registered by the installer
+# Pin gvisor pods to the pool where runsc is installed. The RuntimeClass
+# admission controller injects this nodeSelector into every pod that sets
+# runtimeClassName: gvisor, so they only schedule onto gvisor=enabled nodes.
+scheduling:
+  nodeSelector:
+    gvisor: enabled
