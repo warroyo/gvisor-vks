@@ -13,8 +13,18 @@ metadata:
   name: podinfo-gvisor
 spec:
   runtimeClassName: gvisor
+  # securityContext below satisfies Pod Security Admission "restricted", which
+  # VKS enforces by default, so this runs in any namespace (e.g. default).
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
   containers:
     - name: podinfo
       image: ghcr.io/stefanprodan/podinfo:latest
       ports:
         - containerPort: 9898
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]

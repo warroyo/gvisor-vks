@@ -77,12 +77,22 @@ metadata:
   name: podinfo-gvisor
 spec:
   runtimeClassName: gvisor
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
   containers:
     - name: podinfo
       image: ghcr.io/stefanprodan/podinfo:latest
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
 ```
 
-There's a ready-to-apply version in [`examples/sandboxed-pod.yaml`](examples/sandboxed-pod.yaml):
+The `securityContext` satisfies Pod Security Admission `restricted`, which VKS
+enforces by default, so the workload runs in any namespace. There's a
+ready-to-apply version in [`examples/sandboxed-pod.yaml`](examples/sandboxed-pod.yaml):
 
 ```bash
 kubectl apply -f examples/sandboxed-pod.yaml
