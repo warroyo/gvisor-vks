@@ -38,7 +38,9 @@ app.kubernetes.io/name: {{ include "gvisor-vks.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
-{{/* Target namespace: explicit override or the release namespace. */}}
+{{/* Target namespace. The chart owns/creates this; independent of helm -n so
+     the release can run from any existing namespace. Falls back to the release
+     namespace only if namespace.name is cleared. */}}
 {{- define "gvisor-vks.namespace" -}}
 {{- .Values.namespace.name | default .Release.Namespace -}}
 {{- end -}}

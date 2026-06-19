@@ -13,7 +13,7 @@ Make sure that label is set on your VKS node pool spec, e.g.:
 
 Check install progress (Ready count == pool size when done):
 
-  kubectl -n {{ .Release.Namespace }} rollout status ds/{{ include "gvisor-vks.fullname" . }}
+  kubectl -n {{ include "gvisor-vks.namespace" . }} rollout status ds/{{ include "gvisor-vks.fullname" . }}
 
 {{- if .Values.runtimeClass.create }}
 

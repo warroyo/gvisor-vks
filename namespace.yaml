@@ -1,0 +1,15 @@
+# Apply this BEFORE `helm install`. The gvisor installer is a privileged,
+# host-mounting pod; VKS enforces Pod Security Admission "restricted" by default,
+# which rejects it. This namespace runs at PSA level "privileged".
+#
+#   kubectl apply -f namespace.yaml
+#   helm install gvisor charts/gvisor-vks -n gvisor-system
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gvisor-system
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: privileged
+    pod-security.kubernetes.io/audit: privileged

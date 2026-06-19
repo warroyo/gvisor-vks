@@ -87,13 +87,20 @@ both `tolerations` and `runtimeClass.tolerations` in chart values.
 
 ## Install (Helm)
 
-The chart creates and labels its own namespace at PSA level `privileged` (the
-installer is a privileged host-mounting pod; VKS enforces `restricted` by
-default). Install **without** `--create-namespace` so Helm owns the labels:
+The installer is a privileged host-mounting pod and VKS enforces PSA
+`restricted` by default, so its namespace must be labeled `privileged`. Helm
+cannot create the namespace it installs into (release storage must pre-exist),
+so apply the namespace first, then install:
 
 ```bash
-helm install gvisor charts/gvisor-vks --namespace gvisor-system
+kubectl apply -f namespace.yaml
+helm install gvisor charts/gvisor-vks -n gvisor-system
 ```
+
+`namespace.yaml` carries the `pod-security.kubernetes.io/enforce: privileged`
+label. Resources land in the release namespace (`-n`). If a tool that applies
+the namespace and chart in one pass manages the install (e.g. kapp in the addon
+path), set `namespace.create=true` to render the namespace from the chart.
 
 Common overrides (`--set` or a values file):
 
