@@ -1,0 +1,56 @@
+# Installer image (built + pushed by .github/workflows/build-image.yml).
+image:
+  repository: ghcr.io/warroyo/gvisor-installer
+  tag: ""                       # defaults to .Chart.AppVersion when empty
+  pullPolicy: IfNotPresent
+
+# Pull secrets for the installer image (if the GHCR package is private).
+imagePullSecrets: []
+#  - name: ghcr-creds
+
+# Node-pool targeting. gVisor is installed ONLY on nodes matching this
+# selector, and gvisor pods are pinned to them via the RuntimeClass below.
+# Set the same label on the VKS node pool spec so nodes inherit it.
+nodeSelector:
+  gvisor: enabled
+
+# Tolerations for the installer DaemonSet. Empty by default (label-only
+# isolation). To DEDICATE a pool, taint it (e.g. gvisor=enabled:NoSchedule)
+# and add the matching toleration here AND under runtimeClass.tolerations.
+tolerations: []
+#  - key: gvisor
+#    operator: Equal
+#    value: enabled
+#    effect: NoSchedule
+
+gvisor:
+  release: latest               # GVISOR_RELEASE env; "latest" or pinned e.g. 20240101.0
+  hostRoot: /host               # where the host filesystem is mounted in the pod
+
+# Cluster-scoped RuntimeClass that workloads reference via runtimeClassName.
+runtimeClass:
+  create: true
+  name: gvisor
+  handler: runsc                # must match the containerd runtime the installer registers
+  # scheduling.nodeSelector is taken from .Values.nodeSelector automatically.
+  # Add tolerations here to match a tainted/dedicated pool:
+  tolerations: []
+
+updateStrategy:
+  type: RollingUpdate
+  maxUnavailable: 1
+
+# Optional: priorityClass so the installer schedules ahead of workloads.
+priorityClassName: ""
+
+resources: {}
+#  limits:
+#    cpu: 100m
+#    memory: 128Mi
+#  requests:
+#    cpu: 50m
+#    memory: 64Mi
+
+# Extra labels/annotations applied to all rendered resources.
+commonLabels: {}
+commonAnnotations: {}

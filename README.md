@@ -23,8 +23,8 @@ restarts don't re-bounce containerd. A `RuntimeClass` named `gvisor` (handler
 ## Layout
 
 ```
-image/      Dockerfile + install-gvisor.sh (self-contained installer image)
-manifests/  daemonset.yaml, runtimeclass.yaml
+image/                Dockerfile + install-gvisor.sh (self-contained installer image)
+charts/gvisor-vks/    Helm chart (DaemonSet + RuntimeClass)
 ```
 
 ## Build & push
@@ -82,16 +82,31 @@ Set the label on the VKS node pool spec; nodes inherit it:
 ```
 
 No taint, so ordinary workloads may still schedule on the pool. To **dedicate**
-a pool to gvisor instead, taint it (e.g. `gvisor=enabled:NoSchedule`) and add a
-matching `tolerations` block to both the DaemonSet and the RuntimeClass
-`scheduling` field.
+a pool to gvisor instead, taint it (e.g. `gvisor=enabled:NoSchedule`) and set
+both `tolerations` and `runtimeClass.tolerations` in chart values.
 
-## Deploy
+## Install (Helm)
 
 ```bash
-kubectl apply -f manifests/daemonset.yaml
-kubectl apply -f manifests/runtimeclass.yaml
+helm install gvisor charts/gvisor-vks \
+  --namespace gvisor-system --create-namespace
 ```
+
+Common overrides (`--set` or a values file):
+
+| Value | Default | Purpose |
+|-------|---------|---------|
+| `image.repository` | `ghcr.io/warroyo/gvisor-installer` | installer image |
+| `image.tag` | `""` → chart appVersion | pin an image tag |
+| `nodeSelector` | `{gvisor: enabled}` | which pool to install on |
+| `gvisor.release` | `latest` | gVisor release (env, fallback path) |
+| `tolerations` / `runtimeClass.tolerations` | `[]` | for a tainted/dedicated pool |
+| `imagePullSecrets` | `[]` | if the GHCR package is private |
+| `runtimeClass.name` | `gvisor` | RuntimeClass name workloads reference |
+
+Uninstall: `helm uninstall gvisor -n gvisor-system`. (The installed runsc
+binaries + containerd config on nodes are not removed by uninstall — a cleanup
+DaemonSet is future work.)
 
 ## Use
 
@@ -113,5 +128,5 @@ spec:
   `maxUnavailable: 1` to limit blast radius.
 - Pod runs `privileged` + `hostPID` — required for nsenter and host writes.
 - Self-contained image (no node network pkg installs) for airgapped VKS.
-- Next: package as a VKS ClusterBootstrap / Carvel addon, add uninstall path,
-  pin a specific `GVISOR_RELEASE` instead of `latest`.
+- Next: wrap this chart as a VKS Carvel/ClusterBootstrap addon, add an uninstall
+  cleanup path, pin a specific `GVISOR_RELEASE` instead of `latest`.

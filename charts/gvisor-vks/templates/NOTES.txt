@@ -1,0 +1,33 @@
+gvisor-vks installed.
+
+The installer DaemonSet runs on nodes matching:
+{{ toYaml .Values.nodeSelector | indent 2 }}
+Make sure that label is set on your VKS node pool spec, e.g.:
+
+  nodePools:
+    - name: gvisor-pool
+      labels:
+{{- range $k, $v := .Values.nodeSelector }}
+        {{ $k }}: {{ $v }}
+{{- end }}
+
+Check install progress (Ready count == pool size when done):
+
+  kubectl -n {{ .Release.Namespace }} rollout status ds/{{ include "gvisor-vks.fullname" . }}
+
+{{- if .Values.runtimeClass.create }}
+
+Run a sandboxed pod:
+
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: nginx-gvisor
+  spec:
+    runtimeClassName: {{ .Values.runtimeClass.name }}
+    containers:
+      - name: nginx
+        image: nginx
+
+The RuntimeClass auto-pins it to gvisor nodes; no nodeSelector needed on the pod.
+{{- end }}

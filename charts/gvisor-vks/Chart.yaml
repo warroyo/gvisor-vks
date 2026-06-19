@@ -1,0 +1,17 @@
+apiVersion: v2
+name: gvisor-vks
+description: Installs gVisor (runsc) on VKS node pools via a per-node DaemonSet and registers the gvisor RuntimeClass.
+type: application
+version: 0.1.0
+appVersion: "latest"
+keywords:
+  - gvisor
+  - runsc
+  - sandbox
+  - vks
+  - containerd
+home: https://github.com/warroyo/gvisor-vks
+sources:
+  - https://github.com/warroyo/gvisor-vks
+maintainers:
+  - name: warroyo

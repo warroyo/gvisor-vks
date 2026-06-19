@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "gvisor-vks.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "gvisor-vks.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "gvisor-vks.selectorLabels" . | nindent 6 }}
+  updateStrategy:
+    type: {{ .Values.updateStrategy.type }}
+    {{- if eq .Values.updateStrategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.updateStrategy.maxUnavailable }}
+    {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "gvisor-vks.selectorLabels" . | nindent 8 }}
+    spec:
+      # Share host PID namespace so nsenter can reach the host's PID 1 (systemd).
+      hostPID: true
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      # Install only on the gvisor node pool.
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: installer
+          image: {{ include "gvisor-vks.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            privileged: true        # required for nsenter + writing host paths
+          env:
+            - name: HOST_ROOT
+              value: {{ .Values.gvisor.hostRoot | quote }}
+            - name: GVISOR_RELEASE
+              value: {{ .Values.gvisor.release | quote }}
+          volumeMounts:
+            - name: host-root
+              mountPath: {{ .Values.gvisor.hostRoot }}
+          readinessProbe:
+            exec:
+              command: ["test", "-f", "{{ .Values.gvisor.hostRoot }}/usr/local/bin/.gvisor-installed"]
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: host-root
+          hostPath:
+            path: /
+            type: Directory

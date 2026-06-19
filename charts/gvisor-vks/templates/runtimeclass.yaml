@@ -1,0 +1,20 @@
+{{- if .Values.runtimeClass.create }}
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: {{ .Values.runtimeClass.name }}
+  labels:
+    {{- include "gvisor-vks.labels" . | nindent 4 }}
+# handler must match the containerd runtimes.<handler> the installer registers.
+handler: {{ .Values.runtimeClass.handler }}
+# Pin gvisor pods to the pool where runsc is installed. The RuntimeClass
+# admission controller injects this nodeSelector (and tolerations) into every
+# pod that sets runtimeClassName: {{ .Values.runtimeClass.name }}.
+scheduling:
+  nodeSelector:
+    {{- toYaml .Values.nodeSelector | nindent 4 }}
+  {{- with .Values.runtimeClass.tolerations }}
+  tolerations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
