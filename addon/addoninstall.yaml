@@ -1,17 +1,18 @@
-# AddonInstall — selects target clusters and installs the release. See README.
-# clusters: [] installs on ALL clusters; releaseFilter pins the version.
+# AddonInstall — installs the release into the target cluster. Lives in the
+# cluster namespace (same as AddonConfig). Replace <cluster-namespace>.
+# clusters: [] installs on ALL clusters in the namespace; releaseFilter pins the
+# version. See README.
 apiVersion: addons.kubernetes.vmware.com/v1alpha1
 kind: AddonInstall
 metadata:
   name: gvisor-vks-install
-  namespace: vmware-system-vks-public
+  namespace: <cluster-namespace>
 spec:
   addonRef:
     name: gvisor-vks
   releaseFilter:
     versions:
       - 0.2.0
-  crossNamespaceSelection: Allowed
   stopMatchingBehavior: Retain
   clusters:
     - selector:
