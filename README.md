@@ -109,13 +109,6 @@ kubectl apply -f addon/addonconfig.yaml            # ACD binding + helm values (
 kubectl apply -f addon/addoninstall.yaml           # select clusters + install the release
 ```
 
-addon-manager scans the repo and **auto-generates** the `Addon`, `AddonRelease`,
-and `AddonConfigDefinition` from the chart's embedded ACD annotation — you don't
-author those. `addonconfig.yaml` overrides values (`helmOptions.targetNamespace`,
-which the ACD also reads to template the privileged namespace, plus `helmValues`
-like `nodeSelector`). `addoninstall.yaml` lives in `vmware-system-vks-public`,
-selects target clusters by label, and pins the release via `releaseFilter`.
-
 ### Verify
 
 ```bash
@@ -127,11 +120,6 @@ kubectl get clusteraddon -n <cluster-namespace> <cluster-name>-gvisor-vks \
 kubectl get ns gvisor-system -o jsonpath='{.metadata.labels.pod-security\.kubernetes\.io/enforce}'  # privileged
 kubectl -n gvisor-system rollout status ds/gvisor-gvisor-vks
 ```
-
-> Field shapes (`addonFilters`, `AddonInstall.releaseFilter`,
-> `addonConfigDefinitionRef`) vary slightly across VKS 3.7 doc revisions.
-> Cross-check the rendered objects with `kubectl get addon -n <cluster-namespace>`
-> on the live Supervisor and adjust if a field name differs.
 
 ## Running a sandboxed pod
 
