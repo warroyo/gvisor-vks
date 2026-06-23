@@ -104,7 +104,7 @@ placeholders — fill them in first. Apply on the **Supervisor**, in order:
 
 ```bash
 kubectl apply -f addon/addonrepository.yaml        # HTTPS Helm repo (vmware-system-vks-public)
-kubectl apply -f addon/addonrepositoryinstall.yaml # expose it to the cluster namespace
+kubectl apply -f addon/addonrepositoryinstall.yaml # install the repo (vmware-system-vks-public)
 kubectl apply -f addon/addonconfig.yaml            # ACD binding + helm values (overrides)
 kubectl apply -f addon/addoninstall.yaml           # select clusters + install the release
 ```
