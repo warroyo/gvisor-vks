@@ -1,0 +1,28 @@
+apiVersion: v1
+entries:
+  gvisor-vks:
+  - annotations:
+      addons.kubernetes.vmware.com/addon-config-definition: H4sIAAAAAAAAA51TPW/bMBDd9SsOyCwGRjdthu2hQ5MgAbyfybPEmiIJ8qRASPPfS1GWLbst0Jbj8b13H+/uAdabLUTXBUkVMLXeIFMEbgh80L02VJOCutfRhTIOMUHAYkvRoyTQll3GvrtwMg5V8QDSdAkVBOysdCqRM2jTYGAxYGvgMECUQXuOj5QhJUolYiPgjQhed+vtt50o0Os9haidrQCVcjaKU3egYCnVJ/r2HQMJ6drHfoXGN7gqTtqqCtYjduPsUddbOmqrOUkULTEqZKwKyOVXc0v9KRbRkxw/omyozRAA58muX77uv7wtggA8+MR1h+8k+RzyIWEDa4ozCKAh0z77MfMi+Fv2nxQyHENN/DRP+/ZzVosctK3vvhQdsTNc3Rr3C2iyIY/45Wr21d7RWTkaBzomGyOjMWdDRRKb1+W5Y9/xK01rdG6ivJ3zRXQeZO5tM+3KJFDBj0uFS/f71SU8Wfx0pwWwtHd+U/qPDxB7NF3amYUp4m608Pm5YBo8kLnzwjtVRpJd0DwsF1G7tMRHl8/nejD/SC37udd8ffy39HQD9n/SYqc03xB/Ar6wTBcIBAAA
+    apiVersion: v2
+    appVersion: latest
+    created: "2026-06-23T23:08:39.853672418Z"
+    description: Installs gVisor (runsc) on VKS node pools via a per-node DaemonSet
+      and registers the gvisor RuntimeClass.
+    digest: 6ce2c759392b2917981a0df19e6c413c4cc7c07c45ce2a699422b0aa895ad072
+    home: https://github.com/warroyo/gvisor-vks
+    keywords:
+    - gvisor
+    - runsc
+    - sandbox
+    - vks
+    - containerd
+    maintainers:
+    - name: warroyo
+    name: gvisor-vks
+    sources:
+    - https://github.com/warroyo/gvisor-vks
+    type: application
+    urls:
+    - https://github.com/warroyo/gvisor-vks/releases/download/gvisor-vks-0.2.0/gvisor-vks-0.2.0.tgz
+    version: 0.2.0
+generated: "2026-06-23T23:08:39.853676495Z"
