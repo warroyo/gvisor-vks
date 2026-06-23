@@ -1,0 +1,30 @@
+# ACD source: templates the privileged gvisor-system namespace into the workload
+# cluster. Encoded into Chart.yaml by scripts/encode-acd.sh. See README.
+apiVersion: addons.kubernetes.vmware.com/v1alpha1
+kind: AddonConfigDefinition
+metadata:
+  name: gvisor-vks
+spec:
+  schema:
+    openAPIV3Schema:
+      type: object
+      properties:
+        helmOptions:
+          type: object
+          properties:
+            targetNamespace:
+              type: string
+              default: gvisor-system
+              description: Privileged namespace the chart is installed into.
+  templateOutputResources:
+    - name: gvisor-namespace
+      targetClusterOutput: |
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+          name: {{ .Values.helmOptions.targetNamespace }}
+          labels:
+            pod-security.kubernetes.io/enforce: privileged
+            pod-security.kubernetes.io/enforce-version: latest
+            pod-security.kubernetes.io/warn: privileged
+            pod-security.kubernetes.io/audit: privileged

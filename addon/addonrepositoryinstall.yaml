@@ -1,0 +1,11 @@
+# AddonRepositoryInstall — exposes the AddonRepository to a cluster namespace.
+# Replace <cluster-namespace>. See README.
+apiVersion: addons.kubernetes.vmware.com/v1alpha1
+kind: AddonRepositoryInstall
+metadata:
+  name: gvisor-vks
+  namespace: <cluster-namespace>
+spec:
+  addonRepositoryRef:
+    name: gvisor-vks
+    namespace: vmware-system-vks-public

@@ -2,7 +2,7 @@ apiVersion: v2
 name: gvisor-vks
 description: Installs gVisor (runsc) on VKS node pools via a per-node DaemonSet and registers the gvisor RuntimeClass.
 type: application
-version: 0.1.0
+version: 0.2.0
 appVersion: "latest"
 keywords:
   - gvisor
@@ -15,3 +15,5 @@ sources:
   - https://github.com/warroyo/gvisor-vks
 maintainers:
   - name: warroyo
+# The addons.kubernetes.vmware.com/addon-config-definition annotation is injected
+# at release time by scripts/encode-acd.sh — not committed here. See README.
