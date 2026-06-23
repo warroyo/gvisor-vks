@@ -65,6 +65,74 @@ Watch it roll out — `Ready` should match the size of your gVisor pool:
 kubectl -n gvisor-system rollout status ds/gvisor-gvisor-vks
 ```
 
+## Deploy as a VKS addon
+
+The manual `helm install` above is per-cluster. VKS 3.7 adds **Helm-based addon
+management**, where the Supervisor installs the chart into workload clusters
+declaratively and across a fleet. The chart supports that flow alongside the
+manual one.
+
+It works by pointing the Supervisor at an HTTPS Helm repo and applying a chain
+of addon CRDs (`addons.kubernetes.vmware.com/v1alpha1`). Two wrinkles the chart
+handles for you:
+
+- **VKS addon repos must be legacy HTTPS** — OCI/GHCR is not supported. The
+  chart is published to GitHub Pages at `https://warroyo.github.io/gvisor-vks`
+  by [`release-chart.yml`](.github/workflows/release-chart.yml).
+- **The installer pod is privileged**, so its namespace must be PSA
+  `privileged` before the pod is admitted. helm-controller owns that namespace
+  in the addon flow, so the manual `namespace.yaml` pre-step doesn't fit.
+  Instead the chart embeds an **AddonConfigDefinition (ACD)** that templates the
+  privileged `gvisor-system` namespace into the workload cluster.
+
+### Prerequisites
+
+- A VKS 3.7+ cluster, and access to the Supervisor context.
+- **helm-controller** enabled. It's auto-on for clusterClass 3.7+. For older
+  clusterClass, label the target Cluster:
+  ```bash
+  kubectl label cluster <cluster-name> -n <cluster-namespace> \
+    addon.addons.kubernetes.vmware.com/helm-controller=managed
+  ```
+- The node pool labeled `gvisor: enabled` (same as the manual install).
+- The chart published to the HTTPS Helm repo (see [CI](#ci)).
+
+### Apply the addon manifests
+
+The manifests in [`addon/`](addon/) carry `<cluster-name>` / `<cluster-namespace>`
+placeholders — fill them in first. Apply on the **Supervisor**, in order:
+
+```bash
+kubectl apply -f addon/addonrepository.yaml        # HTTPS Helm repo (vmware-system-vks-public)
+kubectl apply -f addon/addonrepositoryinstall.yaml # expose it to the cluster namespace
+kubectl apply -f addon/addonconfig.yaml            # ACD binding + helm values (overrides)
+kubectl apply -f addon/addoninstall.yaml           # select clusters + install the release
+```
+
+addon-manager scans the repo and **auto-generates** the `Addon`, `AddonRelease`,
+and `AddonConfigDefinition` from the chart's embedded ACD annotation — you don't
+author those. `addonconfig.yaml` overrides values (`helmOptions.targetNamespace`,
+which the ACD also reads to template the privileged namespace, plus `helmValues`
+like `nodeSelector`). `addoninstall.yaml` lives in `vmware-system-vks-public`,
+selects target clusters by label, and pins the release via `releaseFilter`.
+
+### Verify
+
+```bash
+# Supervisor: addon Ready
+kubectl get clusteraddon -n <cluster-namespace> <cluster-name>-gvisor-vks \
+  -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'   # True
+
+# Workload cluster: privileged namespace exists and the DaemonSet rolled out
+kubectl get ns gvisor-system -o jsonpath='{.metadata.labels.pod-security\.kubernetes\.io/enforce}'  # privileged
+kubectl -n gvisor-system rollout status ds/gvisor-gvisor-vks
+```
+
+> Field shapes (`addonFilters`, `AddonInstall.releaseFilter`,
+> `addonConfigDefinitionRef`) vary slightly across VKS 3.7 doc revisions.
+> Cross-check the rendered objects with `kubectl get addon -n <cluster-namespace>`
+> on the live Supervisor and adjust if a field name differs.
+
 ## Running a sandboxed pod
 
 Set `runtimeClassName: gvisor` and you're done. The pod schedules onto a gVisor
@@ -173,9 +241,30 @@ the `gvisor` runtime class.
 
 ```
 image/                Dockerfile + install-gvisor.sh (the installer image)
-charts/gvisor-vks/     Helm chart (DaemonSet + RuntimeClass)
-namespace.yaml         privileged namespace, applied before the chart
+charts/gvisor-vks/     Helm chart (DaemonSet + RuntimeClass; embeds the ACD annotation)
+namespace.yaml         privileged namespace, applied before the manual chart install
+addon/                 VKS 3.7 addon CRDs + the AddonConfigDefinition source
+scripts/encode-acd.sh  encodes addon/addon-config-definition.yaml into Chart.yaml
 examples/              sample sandboxed workloads
+```
+
+### The addon (ACD) annotation
+
+`addon/addon-config-definition.yaml` is the source of truth for the
+AddonConfigDefinition. VKS reads it from a `gzip|base64` annotation on the chart
+(`addons.kubernetes.vmware.com/addon-config-definition`). The annotation is
+**not committed** — `release-chart.yml` runs `scripts/encode-acd.sh` to inject
+it into `Chart.yaml` at package time, so only the source YAML lives in the repo.
+
+To inspect the encoding locally (this dirties `Chart.yaml` — revert after):
+
+```bash
+scripts/encode-acd.sh
+# round-trip check (diffs clean):
+yq '.annotations."addons.kubernetes.vmware.com/addon-config-definition"' \
+  charts/gvisor-vks/Chart.yaml | base64 -d | gunzip \
+  | diff - addon/addon-config-definition.yaml
+git checkout charts/gvisor-vks/Chart.yaml
 ```
 
 ### The installer image
@@ -199,6 +288,22 @@ ghcr.io/warroyo/gvisor-installer:latest        # main
 ghcr.io/warroyo/gvisor-installer:sha-<short>   # per commit
 ghcr.io/warroyo/gvisor-installer:<tag>         # on v* tags
 ```
+
+`.github/workflows/release-chart.yml` publishes the **chart** (separate from the
+image) to GitHub Pages via `helm/chart-releaser-action` on pushes to `main` that
+touch `charts/` and on `v*` tags. It pushes `index.yaml` to the `gh-pages`
+branch and cuts a per-version GitHub Release with the `.tgz`, giving the HTTPS
+Helm repo the VKS addon flow consumes:
+
+```bash
+helm repo add gvisor https://warroyo.github.io/gvisor-vks
+helm repo update
+helm search repo gvisor
+```
+
+Each chart change must bump `charts/gvisor-vks/Chart.yaml` `version` —
+chart-releaser refuses to re-release an existing version. One-time setup: enable
+GitHub Pages on the `gh-pages` branch in repo settings.
 
 ### Building locally
 

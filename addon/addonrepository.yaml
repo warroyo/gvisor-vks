@@ -1,0 +1,14 @@
+# AddonRepository — HTTPS Helm repo hosting the gvisor-vks chart. See README.
+apiVersion: addons.kubernetes.vmware.com/v1alpha1
+kind: AddonRepository
+metadata:
+  name: gvisor-vks
+  namespace: vmware-system-vks-public
+spec:
+  fetch:
+    helmRepository:
+      url: https://warroyo.github.io/gvisor-vks
+  addonFilters:
+    - chartName: gvisor-vks
+      versions:
+        - 0.2.0

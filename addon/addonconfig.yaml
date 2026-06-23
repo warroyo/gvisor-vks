@@ -1,0 +1,16 @@
+# AddonConfig — ACD binding + Helm value overrides. Replace <cluster-namespace>.
+# See README.
+apiVersion: addons.kubernetes.vmware.com/v1alpha1
+kind: AddonConfig
+metadata:
+  name: gvisor-vks
+  namespace: <cluster-namespace>
+spec:
+  addonConfigDefinitionRef:
+    name: gvisor-vks
+  values:
+    helmOptions:
+      targetNamespace: gvisor-system
+    helmValues:
+      nodeSelector:
+        gvisor: enabled
