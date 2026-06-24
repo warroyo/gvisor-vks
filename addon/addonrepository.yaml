@@ -15,7 +15,7 @@ spec:
   fetch:
     helmRepository:
       url: https://warroyo.github.io/gvisor-vks
-  addonFilters:
-    - name: gvisor-vks
-      versions:
-        - 0.3.0
+  # addonFilters:
+  #   - name: gvisor-vks
+  #     versions:
+  #       - 0.3.0
