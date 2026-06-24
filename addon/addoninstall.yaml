@@ -12,7 +12,7 @@ spec:
     name: gvisor-vks
   releaseFilter:
     ref:
-      name: gvisor-vks.0.2.0   # <addon>.<version>; omit releaseFilter for latest
+      name: gvisor-vks.0.3.0   # <addon>.<version>; omit releaseFilter for latest
   stopMatchingBehavior: Retain
   clusters:
     - selector:
