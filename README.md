@@ -87,10 +87,6 @@ handles for you:
   (`namespace.create=true`), while the Helm release installs into a pods-free
   release namespace (`gvisor-addon`) where PSA `restricted` is harmless.
 
-> A future VKS version will template the privileged namespace from an
-> **AddonConfigDefinition (ACD)** embedded in the chart instead — that path is
-> parked in [`addon/addon-config-definition.yaml`](addon/addon-config-definition.yaml)
-> + [`scripts/encode-acd.sh`](scripts/encode-acd.sh) until VKS supports it.
 
 ### Prerequisites
 
