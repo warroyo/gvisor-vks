@@ -7,8 +7,15 @@ metadata:
   namespace: <cluster-namespace>
 spec:
   values:
+    # Release namespace (bookkeeping only, no pods). Must differ from the
+    # workload namespace below. gvisor-addon must exist before install
+    # (helm-controller createNamespace, or pre-create it). See README.
     helmOptions:
-      targetNamespace: gvisor-system
+      targetNamespace: gvisor-addon
     helmValues:
+      # Chart creates the privileged workload namespace for the DaemonSet.
+      namespace:
+        create: true
+        name: gvisor-system
       nodeSelector:
         gvisor: enabled

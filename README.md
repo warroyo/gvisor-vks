@@ -80,10 +80,17 @@ handles for you:
   chart is published to GitHub Pages at `https://warroyo.github.io/gvisor-vks`
   by [`release-chart.yml`](.github/workflows/release-chart.yml).
 - **The installer pod is privileged**, so its namespace must be PSA
-  `privileged` before the pod is admitted. helm-controller owns that namespace
-  in the addon flow, so the manual `namespace.yaml` pre-step doesn't fit.
-  Instead the chart embeds an **AddonConfigDefinition (ACD)** that templates the
-  privileged `gvisor-system` namespace into the workload cluster.
+  `privileged` before the pod is admitted. helm-controller owns the release
+  namespace and creates it unlabeled, so the chart can't put the privileged pod
+  there. Instead the namespaces are **decoupled**: the chart creates a separate
+  privileged workload namespace (`gvisor-system`) for the DaemonSet
+  (`namespace.create=true`), while the Helm release installs into a pods-free
+  release namespace (`gvisor-addon`) where PSA `restricted` is harmless.
+
+> A future VKS version will template the privileged namespace from an
+> **AddonConfigDefinition (ACD)** embedded in the chart instead — that path is
+> parked in [`addon/addon-config-definition.yaml`](addon/addon-config-definition.yaml)
+> + [`scripts/encode-acd.sh`](scripts/encode-acd.sh) until VKS supports it.
 
 ### Prerequisites
 
@@ -96,6 +103,10 @@ handles for you:
   ```
 - The node pool labeled `gvisor: enabled` (same as the manual install).
 - The chart published to the HTTPS Helm repo (see [CI](#ci)).
+- The release namespace `gvisor-addon` exists on the workload cluster. The chart
+  can't create its own release namespace, so either helm-controller auto-creates
+  `targetNamespace` or pre-create it (`kubectl create ns gvisor-addon`) — it's
+  PSA-restricted-safe since no pods land there.
 
 ### Apply the addon manifests
 
@@ -105,7 +116,7 @@ placeholders — fill them in first. Apply on the **Supervisor**, in order:
 ```bash
 kubectl apply -f addon/addonrepository.yaml        # HTTPS Helm repo (vmware-system-vks-public)
 kubectl apply -f addon/addonrepositoryinstall.yaml # install the repo (vmware-system-vks-public)
-kubectl apply -f addon/addonconfig.yaml            # ACD binding + helm values (overrides)
+kubectl apply -f addon/addonconfig.yaml            # release ns + helm value overrides (cluster namespace)
 kubectl apply -f addon/addoninstall.yaml           # install the release (cluster namespace)
 ```
 
@@ -205,7 +216,8 @@ Set these with `--set` or a values file:
 | `imagePullSecrets` | `[]` | for a private GHCR package |
 | `runtimeClass.name` | `gvisor` | the name workloads reference |
 | `tolerations`, `runtimeClass.tolerations` | `[]` | for a tainted pool |
-| `namespace.name` | release namespace | override where resources land |
+| `namespace.create` | `false` | render the privileged workload namespace (addon flow) |
+| `namespace.name` | release namespace | workload namespace for the DaemonSet |
 
 By default any workload can still schedule on the gVisor pool. To keep the pool
 for gVisor only, taint it (for example `gvisor=enabled:NoSchedule`) and set both
@@ -229,26 +241,28 @@ the `gvisor` runtime class.
 
 ```
 image/                Dockerfile + install-gvisor.sh (the installer image)
-charts/gvisor-vks/     Helm chart (DaemonSet + RuntimeClass; embeds the ACD annotation)
+charts/gvisor-vks/     Helm chart (DaemonSet + RuntimeClass + privileged Namespace)
 namespace.yaml         privileged namespace, applied before the manual chart install
-addon/                 VKS 3.7 addon CRDs + the AddonConfigDefinition source
-scripts/encode-acd.sh  encodes addon/addon-config-definition.yaml into Chart.yaml
+addon/                 VKS 3.7 addon CRDs (+ parked AddonConfigDefinition source)
+scripts/encode-acd.sh  parked: encode the ACD into Chart.yaml (see below)
 examples/              sample sandboxed workloads
 ```
 
-### The addon (ACD) annotation
+### The AddonConfigDefinition (parked)
 
-`addon/addon-config-definition.yaml` is the source of truth for the
-AddonConfigDefinition. VKS reads it from a `gzip|base64` annotation on the chart
-(`addons.kubernetes.vmware.com/addon-config-definition`). The annotation is
-**not committed** — `release-chart.yml` runs `scripts/encode-acd.sh` to inject
-it into `Chart.yaml` at package time, so only the source YAML lives in the repo.
+A future VKS version will let the chart ship an **AddonConfigDefinition (ACD)**
+that templates the privileged namespace, via a `gzip|base64` annotation on
+`Chart.yaml` (`addons.kubernetes.vmware.com/addon-config-definition`). That
+feature isn't available yet, so the privileged namespace is created by the chart
+instead (`namespace.create`, `templates/namespace.yaml`).
 
-To inspect the encoding locally (this dirties `Chart.yaml` — revert after):
+The ACD source and encoder are kept for when VKS supports it:
+`addon/addon-config-definition.yaml` is the source of truth, and
+`scripts/encode-acd.sh` injects it into `Chart.yaml`. When re-enabling, run the
+encoder in `release-chart.yml` and round-trip-check it:
 
 ```bash
 scripts/encode-acd.sh
-# round-trip check (diffs clean):
 yq '.annotations."addons.kubernetes.vmware.com/addon-config-definition"' \
   charts/gvisor-vks/Chart.yaml | base64 -d | gunzip \
   | diff - addon/addon-config-definition.yaml

@@ -38,8 +38,10 @@ app.kubernetes.io/name: {{ include "gvisor-vks.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
-{{/* Target namespace: explicit override, else the release namespace (helm -n).
-     The namespace is pre-created out of band (see namespace.yaml). */}}
+{{/* Workload namespace: explicit namespace.name, else the release namespace
+     (helm -n). When namespace.create is true the chart renders this namespace
+     with privileged PSA labels (see templates/namespace.yaml); otherwise it is
+     pre-created out of band (root namespace.yaml). */}}
 {{- define "gvisor-vks.namespace" -}}
 {{- .Values.namespace.name | default .Release.Namespace -}}
 {{- end -}}

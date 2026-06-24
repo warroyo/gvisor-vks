@@ -1,8 +1,16 @@
-# Namespace the resources deploy into. The chart does NOT create it: the
-# installer is a privileged, host-mounting pod and VKS enforces PSA "restricted"
-# by default, so the namespace must be pre-created with the "privileged" label.
-# Apply ../../namespace.yaml first, then `helm install -n gvisor-system`.
+# Workload namespace for the installer DaemonSet (a privileged, host-mounting
+# pod; VKS enforces PSA "restricted" by default, so it must be "privileged").
+#
+# Manual install (default): create=false. Pre-create the namespace
+# (../../namespace.yaml) and `helm install -n gvisor-system`; name stays empty
+# so resources land in the release namespace.
+#
+# VKS addon (helm-controller): create=true and set name to the workload
+# namespace (e.g. gvisor-system). The chart then renders that namespace with the
+# privileged PSA labels, while the release installs into a SEPARATE namespace
+# (helmOptions.targetNamespace). name MUST differ from the release namespace.
 namespace:
+  create: false                 # true => chart renders the privileged namespace
   name: ""                      # empty => use the release namespace (helm -n)
 
 # Installer image (built + pushed by .github/workflows/build-image.yml).
