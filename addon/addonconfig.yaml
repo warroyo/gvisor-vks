@@ -1,9 +1,10 @@
-# AddonConfig — Helm value overrides. Replace <cluster-namespace>. The
-# addonConfigDefinitionRef is set by the controller, not the user. See README.
+# AddonConfig — Helm value overrides. Replace <cluster-name> / <cluster-namespace>.
+# Name must be unique per cluster: convention is <cluster-name>-<addon-name>.
+# The addonConfigDefinitionRef is set by the controller, not the user. See README.
 apiVersion: addons.kubernetes.vmware.com/v1alpha1
 kind: AddonConfig
 metadata:
-  name: gvisor-vks
+  name: <cluster-name>-gvisor-vks
   namespace: <cluster-namespace>
 spec:
   values:
