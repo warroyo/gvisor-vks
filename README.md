@@ -101,12 +101,16 @@ handles for you:
   kubectl label cluster <cluster-name> -n <cluster-namespace> \
     addon.addons.kubernetes.vmware.com/helm-controller=managed
   ```
-- The node pool labeled `gvisor: enabled` (same as the manual install).
+- The node pool labeled `gvisor: enabled` (same as the manual install) — this
+  is the **node** label that schedules the DaemonSet.
+- The target **Cluster** object labeled `gvisor: enabled` (on the Supervisor) —
+  `AddonInstall` selects clusters by this label. Same key as the node-pool
+  label but a different object; without it the install matches nothing (or use
+  `clusters: []` in `addoninstall.yaml` to target all clusters):
+  ```bash
+  kubectl label cluster <cluster-name> -n <cluster-namespace> gvisor=enabled
+  ```
 - The chart published to the HTTPS Helm repo (see [CI](#ci)).
-- The release namespace `gvisor-addon` exists on the workload cluster. The chart
-  can't create its own release namespace, so either helm-controller auto-creates
-  `targetNamespace` or pre-create it (`kubectl create ns gvisor-addon`) — it's
-  PSA-restricted-safe since no pods land there.
 
 ### Apply the addon manifests
 

@@ -14,6 +14,9 @@ spec:
     ref:
       name: gvisor-vks.0.3.0   # <addon>.<version>; omit releaseFilter for latest
   stopMatchingBehavior: Retain
+  # Selects Cluster objects labeled gvisor: enabled (on the Supervisor). This is
+  # the CLUSTER label, distinct from the node-pool label of the same name. Label
+  # the target Cluster, or use clusters: [] to install on all clusters.
   clusters:
     - selector:
         matchLabels:
